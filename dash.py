@@ -254,6 +254,7 @@ def main():
                     st.divider()
     
     st.markdown("---")
+    st.markdown("Source: www.investorgain.com")
     st.markdown(f"*Last updated: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')} IST*")
 
 if __name__ == "__main__":
