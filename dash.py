@@ -104,7 +104,7 @@ def format_price(price):
 
 def show_gmp_info():
     """Display GMP information section"""
-    with st.expander("ℹ️ What is Grey Market Premium (GMP)?", expanded=True):
+    with st.expander("ℹ️ What is Grey Market Premium (GMP)?", expanded=False):
         st.markdown("""
         ### 📚 Definition
         The Grey Market Premium refers to the unofficial premium or discount at which IPO 
