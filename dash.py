@@ -3,7 +3,6 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 import re
-import datetime
 
 def fetch_ipo_gmp():
     """Fetch IPO data from investorgain.com"""
