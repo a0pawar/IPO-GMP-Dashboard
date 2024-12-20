@@ -253,9 +253,7 @@ def main():
                     """, unsafe_allow_html=True)
                     st.divider()
     
-    # Add footer with last updated time
     st.markdown("---")
-    st.markdown("Sourced from: www.investorgain.com")
     st.markdown(f"*Last updated: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')} IST*")
 
 if __name__ == "__main__":
