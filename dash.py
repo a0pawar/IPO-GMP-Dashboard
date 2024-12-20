@@ -102,7 +102,27 @@ def format_price(price):
     except:
         return price
 
-# [Previous imports and functions remain the same...]
+def show_gmp_info():
+    """Display GMP information section"""
+    with st.expander("ℹ️ What is Grey Market Premium (GMP)?", expanded=True):
+        st.markdown("""
+        ### 📚 Definition
+        The Grey Market Premium refers to the unofficial premium or discount at which IPO 
+        (Initial Public Offering) shares trade before they are officially listed on the stock exchange.
+        """)
+        
+        # Formula in info box
+        st.info("""
+        **Formula:**
+        GMP = Unofficial Grey Market Price - IPO Issue Price
+        """)
+        
+        # Importance
+        st.markdown("### 🎯 Importance in India")
+        st.markdown("""
+        - **Market Sentiment Indicator:** GMP serves as an early indicator of market sentiment 
+        towards an upcoming IPO. A high positive GMP suggests strong demand and potential listing gains.
+        """)
 
 def main():
     st.set_page_config(
@@ -135,7 +155,18 @@ def main():
     """, unsafe_allow_html=True)
     
     st.title("🚀 Live IPO Dashboard")
+    # Add GMP Info
+    show_gmp_info()
     st.markdown("---")
+    
+    # Warning note
+    st.warning("""
+    **Disclaimer:** 
+    * GMP is an unofficial metric and should not be the sole basis for investment decisions. 
+    * Data below is sourced from third party sources and investors should check the correctness of the data by themselves.
+    * The IPOs displayed here are not investment advice.
+    * Always conduct thorough research and consider multiple factors before investing in IPOs.
+    """)
     
     # Add a refresh button
     if st.button("🔄 Refresh Data"):
@@ -224,6 +255,7 @@ def main():
     
     # Add footer with last updated time
     st.markdown("---")
+    st.markdown("Sourced from: www.investorgain.com")
     st.markdown(f"*Last updated: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')} IST*")
 
 if __name__ == "__main__":
