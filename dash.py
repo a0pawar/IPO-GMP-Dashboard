@@ -222,9 +222,9 @@ def main():
                     """, unsafe_allow_html=True)
                     st.divider()
     
-        st.markdown("---")
-        current_time = pd.Timestamp.now().tz_localize('GMT').tz_convert('Asia/Kolkata')
-        st.markdown(f"*Last updated: {current_time.strftime('%Y-%m-%d %H:%M:%S')} IST*")
+    st.markdown("---")
+    current_time = pd.Timestamp.now().tz_localize('GMT').tz_convert('Asia/Kolkata')
+    st.markdown(f"*Last updated: {current_time.strftime('%Y-%m-%d %H:%M:%S')} IST*")
 
 if __name__ == "__main__":
     main()
