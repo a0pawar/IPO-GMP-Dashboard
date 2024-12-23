@@ -193,53 +193,6 @@ def display_subscription_metrics(subscription_data):
 def main():
     st.set_page_config(page_title="IPO Dashboard", page_icon="🚀", layout="wide")
     
-    # Common CSS
-    st.markdown("""
-        <style>
-        .stApp {
-            background-color: #0E1117;
-            color: white;
-        }
-        .ipo-card {
-            background-color: #1E2329;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin: 0.5rem 0;
-            border: 1px solid #2D3748;
-        }
-        .ipo-title {
-            color: white;
-            font-size: 1.25rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-        .ipo-detail {
-            color: #E2E8F0;
-            margin: 0.25rem 0;
-        }
-        .listing-date {
-            color: #FF4B4B;
-            font-weight: bold;
-            font-size: 1.1em;
-            padding: 5px;
-            background-color: #ffeaea;
-            border-radius: 4px;
-            display: inline-block;
-        }
-        .closing-date {
-            color: #FF4B4B;
-            background-color: rgba(255, 75, 75, 0.1);
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            display: inline-block;
-            margin-top: 0.5rem;
-            font-size: 0.875rem;
-        }
-        .stButton>button {
-            width: 100%;
-        }
-        </style>
-    """, unsafe_allow_html=True)
     
     st.title("🚀 Live IPO Dashboard")
     
