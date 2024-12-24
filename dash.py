@@ -221,7 +221,7 @@ def main():
         if df.empty:
             st.error("Unable to fetch IPO data. Please try again later.")
         else:
-            col1, col2, col3 = st.columns(3)
+            col1, col2, col3 = st.columns(3, gap = 'medium')
             
             processed_data = []
             for _, row in df.iterrows():
@@ -301,7 +301,7 @@ def main():
             st.error("Unable to fetch IPO data. Please try again later.")
         else:
             # Create two columns for different IPO statuses
-            col1, col2 = st.columns(2)
+            col1, col2 = st.columns(2, gap = 'large')
             
             with col1:
                 st.subheader("🟢 Open IPOs")
@@ -350,7 +350,7 @@ def main():
     
     st.markdown("---")
     st.markdown("Data Source: www.investorgain.com")
-    st.markdown(f"*Last updated: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')} IST*")
+    st.markdown(f"*Last updated: {(pd.Timestamp.now()).strftime('%Y-%m-%d %H:%M:%S')} IST*")
 
 if __name__ == "__main__":
     main()
