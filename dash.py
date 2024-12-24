@@ -350,7 +350,7 @@ def main():
     
     st.markdown("---")
     st.markdown("Data Source: www.investorgain.com")
-    st.markdown(f"*Last updated: {(pd.Timestamp.now()).strftime('%Y-%m-%d %H:%M:%S')} IST*")
+    st.markdown(f"*Last updated: {(pd.Timestamp.now() + pd.Timedelta(hours=5, minutes=30)).strftime('%Y-%m-%d %H:%M:%S')} IST*")
 
 if __name__ == "__main__":
     main()
