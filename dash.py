@@ -21,7 +21,7 @@ def fetch_ipo_gmp():
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.5",
         "Accept-Encoding": "gzip, deflate",
-        "Referer": "https://www.investorgain.com/sme-ipo-dashboard/",
+        #"Referer": "https://www.investorgain.com/sme-ipo-dashboard/",
         "Connection": "keep-alive",
     }
     
@@ -49,31 +49,40 @@ def fetch_ipo_gmp():
                 rows.append(row)
                 
         df = pd.DataFrame(rows, columns=headers)
-        columns_to_keep = ['IPO', 'Price', 'Est Listing', 'IPO Size', 'Open', 'Close']
+        columns_to_keep = ['IPO', 'Status','Price', 'Est Listing', 'IPO Size', 'Open', 'Close']
         df = df[columns_to_keep]
         
-        return df[df['IPO'].str.contains('Open|Upcoming|Closing Today', case=False)]
+        return df[df['Status'].str.contains('Open|Upcoming|Closing Today', case=False)]
         
     except Exception as e:
         st.error(f"Error fetching data: {str(e)}")
         return pd.DataFrame()
 
-def parse_ipo_details(ipo_text):
-    """Parse IPO text to extract name, type, status and subscription details"""
+import re
+
+# Updated parse_ipo_details function
+def parse_ipo_details(ipo_text, status_text):
+    """
+    Parse IPO text to extract name, type, status, and subscription details.
+    
+    Args:
+        ipo_text (str): The text in the 'IPO' column.
+        status_text (str): The text in the 'Status' column.
+    
+    Returns:
+        dict: A dictionary containing parsed IPO details.
+    """
+    # Extract IPO type
     ipo_type = "SME" if "SME" in ipo_text else "Mainboard"
     
-    if "Upcoming" in ipo_text:
-        status = "Upcoming"
-    elif "Open" in ipo_text:
-        status = "Open"
-    elif "Closing Today" in ipo_text:
-        status = "Closing Today"
-    else:
-        status = "Unknown"
+    # Extract status from the 'Status' column
+    status = status_text.strip()
     
-    sub_match = re.search(r'Sub:(\d+\.?\d*x)', ipo_text)
+    # Extract subscription details (if available in the status text)
+    sub_match = re.search(r'Sub:(\d+\.?\d*x)', status_text)
     sub_times = sub_match.group(1) if sub_match else "N.A."
     
+    # Extract IPO name
     name = ipo_text.split("IPO")[0].replace("BSE SME", "").replace("NSE SME", "").strip()
     
     return {
@@ -221,11 +230,12 @@ def main():
         if df.empty:
             st.error("Unable to fetch IPO data. Please try again later.")
         else:
-            col1, col2, col3 = st.columns(3, gap = 'medium')
+            col1, col2, col3 = st.columns(3, gap='medium')
             
+            # Process the DataFrame
             processed_data = []
             for _, row in df.iterrows():
-                ipo_details = parse_ipo_details(row['IPO'])
+                ipo_details = parse_ipo_details(row['IPO'], row['Status'])
                 processed_data.append({
                     **ipo_details,
                     "price": row['Price'],
@@ -247,7 +257,7 @@ def main():
                             st.markdown(f"""
                             ### {ipo['name']}
                             **Type:** {ipo['type']}  
-                            **Price:** {format_price(ipo['price'])}  
+                            **Price:** {ipo['price']}  
                             **Issue Size:** {ipo['ipo_size']}  
                             <div class='listing-date'>🗓️ Expected Listing: {ipo['est_listing']}</div>
                             """, unsafe_allow_html=True)
@@ -264,7 +274,7 @@ def main():
                             st.markdown(f"""
                             ### {ipo['name']}
                             **Type:** {ipo['type']}  
-                            **Price:** {format_price(ipo['price'])}  
+                            **Price:** {ipo['price']}  
                             **Subscription:** {ipo['subscription']}  
                             **Issue Size:** {ipo['ipo_size']}  
                             <div class='listing-date'>🗓️ Expected Listing: {ipo['est_listing']}</div>
@@ -282,13 +292,13 @@ def main():
                             st.markdown(f"""
                             ### {ipo['name']}
                             **Type:** {ipo['type']}  
-                            **Price:** {format_price(ipo['price'])}  
+                            **Price:** {ipo['price']}  
                             **Subscription:** {ipo['subscription']}  
                             **Issue Size:** {ipo['ipo_size']}  
                             <div class='listing-date'>🗓️ Expected Listing: {ipo['est_listing']}</div>
                             """, unsafe_allow_html=True)
                             st.divider()
-    
+                            
     # Subscription Details Tab
     with tab2:
         # Add a refresh button
