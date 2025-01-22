@@ -58,8 +58,6 @@ def fetch_ipo_gmp():
         st.error(f"Error fetching data: {str(e)}")
         return pd.DataFrame()
 
-import re
-
 # Updated parse_ipo_details function
 def parse_ipo_details(ipo_text, status_text):
     """
@@ -112,6 +110,7 @@ def show_gmp_info():
         towards an upcoming IPO. A high positive GMP suggests strong demand and potential listing gains.
         """)
 
+
 # Subscription Tab Functions
 def fetch_subscription_data():
     """Fetch IPO subscription data from investorgain.com"""
@@ -146,29 +145,38 @@ def fetch_subscription_data():
         
         ist_now = pd.Timestamp.now(tz='Asia/Kolkata').date()
         
-        df = df[df['Close_Date_DT'].dt.date >= ist_now]
+        df = df[df['Status'].str.contains('O|CT', case=False)]
         return df
         
     except Exception as e:
         st.error(f"Error fetching subscription data: {str(e)}")
         return pd.DataFrame()
 
-def parse_subscription_ipo_name(ipo_text):
+
+def parse_subscription_ipo_name(ipo_text, status_text):
     """Parse IPO text for subscription data"""
-    gmp_match = re.search(r'GMP:â¹(\d+)\s*\(([^)]+)\)', ipo_text)
+    # Extract GMP details if available
+    gmp_match = re.search(r'GMP:\$(\d+)\s*\(([^)]+)\)', ipo_text)
     gmp_value = gmp_match.group(1) if gmp_match else 'N/A'
     gmp_percentage = gmp_match.group(2) if gmp_match else 'N/A'
     
+    # Determine IPO type (SME or Mainboard)
     is_sme = "SME" in ipo_text
     name = ipo_text.split("GMP")[0].strip()
     name = re.sub(r'\s*SME\s*$', '', name)
     name = re.sub(r'\s*IPO\s*$', '', name)
     
-    status = None
-    if "CT" in ipo_text:
-        status = "Closing Today"
-    elif "O" in ipo_text:
-        status = "Open"
+    # Map status codes to their corresponding statuses
+    status_mapping = {
+        'O': 'Open',
+        'C': 'Closed',
+        'CT': 'Closing Today',  # If "CT" is used for "Closing Today"
+        # Add more mappings if needed
+    }
+    
+    # Extract status from the 'Status' column and map it
+    status_code = status_text.strip()
+    status = status_mapping.get(status_code, status_code)  # Default to the code if not mapped
     
     return {
         'name': name.strip(),
@@ -248,7 +256,7 @@ def main():
             # Display in columns
             with col1:
                 st.subheader("📅 Upcoming IPOs")
-                upcoming = processed_df[processed_df['status'] == 'Upcoming']
+                upcoming = processed_df[processed_df['status'].str.contains("Upcoming")]
                 if upcoming.empty:
                     st.info("No upcoming IPOs at the moment")
                 else:
@@ -265,7 +273,7 @@ def main():
             
             with col2:
                 st.subheader("🟢 Open IPOs")
-                open_ipos = processed_df[processed_df['status'] == 'Open']
+                open_ipos = processed_df[processed_df['status'].str.contains("Open")]
                 if open_ipos.empty:
                     st.info("No IPOs open for subscription")
                 else:
@@ -283,7 +291,7 @@ def main():
             
             with col3:
                 st.subheader("🔔 Closing Today")
-                closing = processed_df[processed_df['status'] == 'Closing Today']
+                closing = processed_df[processed_df['status'].str.contains("Closing Today")]
                 if closing.empty:
                     st.info("No IPOs closing today")
                 else:
@@ -301,7 +309,7 @@ def main():
                             
     # Subscription Details Tab
     with tab2:
-        # Add a refresh button
+    # Add a refresh button
         if st.button("🔄 Refresh Subscription Data", key="refresh_sub"):
             st.rerun()
         
@@ -310,17 +318,12 @@ def main():
         if df.empty:
             st.error("Unable to fetch IPO data. Please try again later.")
         else:
-            # Create two columns for different IPO statuses
-            col1, col2 = st.columns(2, gap = 'large')
-            
-            with col1:
-                st.subheader("🟢 Open IPOs")
-            with col2:
-                st.subheader("🔔 Closing Today")
+            # Display a single column titled "Current IPOs"
+            st.subheader("📊 Current IPOs")
             
             # Process and display IPOs
             for _, row in df.iterrows():
-                ipo_details = parse_subscription_ipo_name(row['IPO'])
+                ipo_details = parse_subscription_ipo_name(row['IPO'], row['Status'])
                 if not ipo_details['status']:
                     continue
                 
@@ -328,22 +331,24 @@ def main():
                 subscription_data = {
                     'QIB': row.get('QIB', '0.00x'),
                     'SHNI': row.get('SHNI', '0.00x'),
-                    'BHNI': row.get('BHNI', '0.00x'),
                     'NII': row.get('NII', '0.00x'),
                     'RII': row.get('RII', '0.00x'),
                     'Total': row.get('Total', '0.00x')
                 }
                 
-                # Select display column based on status
-                display_col = col1 if ipo_details['status'] == "Open" else col2
-                
-                with display_col:
+                # Display IPO details in a single column
+                with st.container():
+                    # Extract numbers and percentage using regex
+                    matches = re.findall(r'\d+\.\d+|\d+', ipo_details['status'])
+
+                    # Format the extracted numbers as "115(43.73%)"
+                    result = f"{matches[0]}({matches[1]}%)"
                     st.markdown(f"""
                         <div class='ipo-card'>
                             <div class='ipo-title'>{ipo_details['name']} ({ipo_details['type']})</div>
                             <div class='ipo-detail'><strong>Price:</strong> ₹{row['IPO Price']}</div>
                             <div class='ipo-detail'><strong>Size:</strong> {row['IPO Size']}</div>
-                            <div class='ipo-detail'><strong>GMP:</strong> ₹{ipo_details['gmp_value']} ({ipo_details['gmp_percentage']})</div>
+                            <div class='ipo-detail'><strong>GMP:</strong> ₹{result}</div>
                             <div class='ipo-detail'><strong>P/E:</strong> {row.get('P/E', 'N/A')}</div>
                         </div>
                     """, unsafe_allow_html=True)
