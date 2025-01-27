@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-import re
+import re, json
 
 # Common utility functions
 def format_price(price):
@@ -14,49 +14,56 @@ def format_price(price):
 
 # GMP Tab Functions
 def fetch_ipo_gmp():
-    """Fetch IPO data from investorgain.com"""
-    url = "https://www.investorgain.com/report/live-ipo-gmp/331/"
+    """Fetch IPO data from investorgain.com and process it."""
+    url = "https://webnodejs.investorgain.com/cloud/report/data-read/331/1/1/2025/2024-25/0/all?search="
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0",
+        "Accept": "application/json, text/plain, */*",
         "Accept-Language": "en-US,en;q=0.5",
         "Accept-Encoding": "gzip, deflate",
-        #"Referer": "https://www.investorgain.com/sme-ipo-dashboard/",
-        "Connection": "keep-alive",
+        "Connection": "keep-alive"
     }
     
     try:
+        # Fetch the data
         response = requests.get(url, headers=headers)
-        soup = BeautifulSoup(response.text, 'html.parser')
-        table = soup.find('table', {'id': 'mainTable'})
-        if not table:
+        if response.status_code != 200:
+            return pd.DataFrame()
+        
+        # Parse the JSON response
+        data = json.loads(response.text)
+        table_data = data.get("reportTableData", [])
+        if not table_data:
             return pd.DataFrame()
 
-        headers = []
-        for th in table.find('tr').find_all('th'):
-            a_tag = th.find('a')
-            header = a_tag.text if a_tag else th.text
-            header = header.replace('asc', '').strip()
-            headers.append(header)
-            
-        rows = []
-        for tr in table.find('tbody').find_all('tr'):
-            row = []
-            for td in tr.find_all('td'):
-                cell_content = td.get_text(strip=True)
-                row.append(cell_content)
-            if row:
-                rows.append(row)
-                
-        df = pd.DataFrame(rows, columns=headers)
-        columns_to_keep = ['IPO', 'Status','Price', 'Est Listing', 'IPO Size', 'Open', 'Close']
+        # Create a DataFrame
+        df = pd.DataFrame(table_data)
+        if df.empty:
+            return df
+
+        # Function to clean HTML from text
+        def clean_html(text):
+            return BeautifulSoup(text, "html.parser").get_text() if text else text
+
+        # Clean specific columns
+        columns_to_clean = ["Status", "GMP", "Est Listing", "IPO Size", "Fire Rating"]
+        for col in columns_to_clean:
+            if col in df:
+                df[col] = df[col].apply(clean_html)
+
+        # Keep relevant columns
+        columns_to_keep = ["IPO", "Status","Price","IPO Size", "Est Listing", "~Str_Listing", "~IPO_Category"]
         df = df[columns_to_keep]
-        
-        return df[df['Status'].str.contains('Open|Upcoming|Closing Today', case=False)]
-        
+
+        # Filter rows by status
+        df = df[df['Status'].str.contains("Upcoming|Open|Closing Today", case=False)]
+
+        return df
+
     except Exception as e:
-        st.error(f"Error fetching data: {str(e)}")
+        print(f"Error fetching data: {str(e)}")
         return pd.DataFrame()
+
 
 # Updated parse_ipo_details function
 def parse_ipo_details(ipo_text, status_text):
@@ -113,45 +120,56 @@ def show_gmp_info():
 
 # Subscription Tab Functions
 def fetch_subscription_data():
-    """Fetch IPO subscription data from investorgain.com"""
-    url = "https://www.investorgain.com/report/ipo-subscription-live/333/"
+    """Fetch additional IPO data from investorgain.com and process it."""
+    url = "https://webnodejs.investorgain.com/cloud/report/data-read/333/1/1/2025/2024-25/0/all?search="
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0",
+        "Accept": "application/json, text/plain, */*",
         "Accept-Language": "en-US,en;q=0.5",
         "Accept-Encoding": "gzip, deflate",
-        "Referer": "https://www.investorgain.com/",
         "Connection": "keep-alive"
     }
     
     try:
+        # Fetch the data
         response = requests.get(url, headers=headers)
-        soup = BeautifulSoup(response.text, 'html.parser')
-        table = soup.find('table', {'id': 'mainTable'})
-        
-        if not table:
+        if response.status_code != 200:
             return pd.DataFrame()
-            
-        headers = [th.get_text(strip=True).replace('asc', '') for th in table.find('tr').find_all('th')]
-        rows = []
-        for tr in table.find('tbody').find_all('tr'):
-            row = [td.get_text(strip=True) for td in tr.find_all('td')]
-            if row:
-                rows.append(row)
-                
-        df = pd.DataFrame(rows, columns=headers)
-        
-        df['Close_Date_DT'] = pd.to_datetime(df['Close Date'].str.replace(r'(?:st|nd|rd|th)', '', regex=True), format='%d %b %Y')
-        
-        ist_now = pd.Timestamp.now(tz='Asia/Kolkata').date()
-        
-        df = df[df['Status'].str.contains('O|CT', case=False)]
-        return df
-        
-    except Exception as e:
-        st.error(f"Error fetching subscription data: {str(e)}")
-        return pd.DataFrame()
 
+        # Parse the JSON response
+        #print(response.text)
+        data = json.loads(response.text)
+        table_data = data.get("reportTableData", [])
+        if not table_data:
+            return pd.DataFrame()
+
+        # Create a DataFrame
+        df = pd.DataFrame(table_data)
+        if df.empty:
+            return df
+
+        # Function to clean HTML from text
+        def clean_html(text):
+            return BeautifulSoup(text, "html.parser").get_text() if text else text
+
+        # Clean specific columns
+        columns_to_clean = ["Status", "GMP", "IPO Price", "IPO Size", "Total"]
+        for col in columns_to_clean:
+            if col in df:
+                df[col] = df[col].apply(clean_html)
+
+        # Keep relevant columns
+        columns_to_keep = ["IPO", "IPO Price", "IPO Size", "Status", "QIB","SHNI","BHNI","NII","RII","Total", "Close Date", "~IPO_Category"]
+        df = df[columns_to_keep]
+
+        # Filter rows by status
+        df = df[df['Status'].str.contains("O|CT", case=False)]
+
+        return df
+
+    except Exception as e:
+        print(f"Error fetching data: {str(e)}")
+        return pd.DataFrame()
 
 def parse_subscription_ipo_name(ipo_text, status_text):
     """Parse IPO text for subscription data"""
