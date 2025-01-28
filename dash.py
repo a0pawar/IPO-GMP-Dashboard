@@ -367,7 +367,6 @@ def main():
                             <div class='ipo-detail'><strong>Price:</strong> ₹{row['IPO Price']}</div>
                             <div class='ipo-detail'><strong>Size:</strong> {row['IPO Size']}</div>
                             <div class='ipo-detail'><strong>GMP:</strong> ₹{result}</div>
-                            <div class='ipo-detail'><strong>P/E:</strong> {row.get('P/E', 'N/A')}</div>
                         </div>
                     """, unsafe_allow_html=True)
                     
